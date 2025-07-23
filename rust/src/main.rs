@@ -70,9 +70,7 @@ fn create_or_load_wallet(rpc: &Client, wallet_name: &str) -> bitcoincore_rpc::Re
                         Ok(false)
                     }
                     Err(load_err) => {
-                        println!(
-                            "Warning: Could not load wallet '{wallet_name}': {load_err}"
-                        );
+                        println!("Warning: Could not load wallet '{wallet_name}': {load_err}");
                         // Continue anyway, the wallet might be usable
                         Ok(false)
                     }
@@ -214,9 +212,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
     println!("Mined confirmation block: {confirmation_block_hashes:?}");
 
     let confirmation_block_hash = &confirmation_block_hashes[0];
-    println!(
-        "Transaction confirmed in block: {confirmation_block_hash}"
-    );
+    println!("Transaction confirmed in block: {confirmation_block_hash}");
 
     let block_hash_parsed =
         bitcoincore_rpc::bitcoin::BlockHash::from_str(confirmation_block_hash).unwrap();
@@ -224,9 +220,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
     // Get the block height where the transaction was confirmed
     let blockchain_info = rpc.get_blockchain_info()?;
     let confirmation_block_height = blockchain_info.blocks;
-    println!(
-        "Transaction confirmed at block height: {confirmation_block_height}"
-    );
+    println!("Transaction confirmed at block height: {confirmation_block_height}");
 
     // Verify the transaction is now confirmed
     let confirmed_tx = miner_rpc.get_raw_transaction(&txid_parsed, Some(&block_hash_parsed))?;
