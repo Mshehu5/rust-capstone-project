@@ -47,14 +47,14 @@ fn is_wallet_loaded(rpc: &Client, wallet_name: &str) -> bool {
 fn create_or_load_wallet(rpc: &Client, wallet_name: &str) -> bitcoincore_rpc::Result<bool> {
     // First check if the wallet is already loaded
     if is_wallet_loaded(rpc, wallet_name) {
-        println!("Wallet '{}' is already loaded", wallet_name);
+        println!("Wallet '{wallet_name}' is already loaded");
         return Ok(false);
     }
 
     // Try to create the wallet first (this handles most cases cleanly)
     match rpc.create_wallet(wallet_name, None, None, None, None) {
         Ok(_) => {
-            println!("Wallet '{}' created successfully", wallet_name);
+            println!("Wallet '{wallet_name}' created successfully");
             Ok(true) // Wallet was created
         }
         Err(create_err) => {
@@ -63,16 +63,15 @@ fn create_or_load_wallet(rpc: &Client, wallet_name: &str) -> bitcoincore_rpc::Re
             if create_error_msg.contains("Database already exists")
                 || create_error_msg.contains("already exists")
             {
-                println!("Wallet '{}' already exists, trying to load it", wallet_name);
+                println!("Wallet '{wallet_name}' already exists, trying to load it");
                 match rpc.load_wallet(wallet_name) {
                     Ok(_) => {
-                        println!("Wallet '{}' loaded successfully", wallet_name);
+                        println!("Wallet '{wallet_name}' loaded successfully");
                         Ok(false)
                     }
                     Err(load_err) => {
                         println!(
-                            "Warning: Could not load wallet '{}': {}",
-                            wallet_name, load_err
+                            "Warning: Could not load wallet '{wallet_name}': {load_err}"
                         );
                         // Continue anyway, the wallet might be usable
                         Ok(false)
@@ -94,7 +93,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
     // Get blockchain info
     let blockchain_info = rpc.get_blockchain_info()?;
-    println!("Blockchain Info: {:?}", blockchain_info);
+    println!("Blockchain Info: {blockchain_info:?}");
 
     // Create/Load the wallets, named 'Miner' and 'Trader'. Have logic to optionally create/load them if they do not exist or not loaded already.
     println!("\n=== Setting up wallets ===");
@@ -102,17 +101,17 @@ fn main() -> bitcoincore_rpc::Result<()> {
     let miner_created = create_or_load_wallet(&rpc, "Miner")?;
     let trader_created = create_or_load_wallet(&rpc, "Trader")?;
 
-    println!("Miner wallet created: {}", miner_created);
-    println!("Trader wallet created: {}", trader_created);
+    println!("Miner wallet created: {miner_created}");
+    println!("Trader wallet created: {trader_created}");
 
     // Create wallet-specific RPC clients
     let miner_rpc = Client::new(
-        &format!("{}/wallet/Miner", RPC_URL),
+        &format!("{RPC_URL}/wallet/Miner"),
         Auth::UserPass(RPC_USER.to_owned(), RPC_PASS.to_owned()),
     )?;
 
     let trader_rpc = Client::new(
-        &format!("{}/wallet/Trader", RPC_URL),
+        &format!("{RPC_URL}/wallet/Trader"),
         Auth::UserPass(RPC_USER.to_owned(), RPC_PASS.to_owned()),
     )?;
 
@@ -120,7 +119,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
     println!("\n=== Generating mining rewards ===");
 
     let miner_address = miner_rpc.get_new_address(Some("Mining Reward"), None)?;
-    println!("Generated mining reward address: {:?}", miner_address);
+    println!("Generated mining reward address: {miner_address:?}");
 
     // Convert address to string format for RPC calls
     let miner_address_str = miner_address.assume_checked().to_string();
@@ -137,7 +136,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
         let block_hashes = miner_rpc
             .call::<Vec<String>>("generatetoaddress", &[json!(1), json!(miner_address_str)])?;
-        println!("Mined block: {:?}", block_hashes);
+        println!("Mined block: {block_hashes:?}");
 
         // Coinbase rewards require 100 block confirmations before becoming spendable to prevent issues from chain reorganizations.
         // This is why we need to mine 100 blocks before the miner balance is greater than 0.
@@ -154,7 +153,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
     // The Trader wallet should already be loaded after creation/loading
 
     let trader_address = trader_rpc.get_new_address(Some("Received"), None)?;
-    println!("Generated Trader receiving address: {:?}", trader_address);
+    println!("Generated Trader receiving address: {trader_address:?}");
 
     // Convert trader address to string format for RPC calls
     let trader_address_str = trader_address.assume_checked().to_string();
@@ -193,7 +192,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
             json!(null),
         ],
     )?;
-    println!("Transaction sent! TXID: {}", txid);
+    println!("Transaction sent! TXID: {txid}");
 
     let txid_parsed = bitcoincore_rpc::bitcoin::Txid::from_str(&txid).unwrap();
 
@@ -212,12 +211,11 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
     let confirmation_block_hashes = miner_rpc
         .call::<Vec<String>>("generatetoaddress", &[json!(1), json!(miner_address_str)])?;
-    println!("Mined confirmation block: {:?}", confirmation_block_hashes);
+    println!("Mined confirmation block: {confirmation_block_hashes:?}");
 
     let confirmation_block_hash = &confirmation_block_hashes[0];
     println!(
-        "Transaction confirmed in block: {}",
-        confirmation_block_hash
+        "Transaction confirmed in block: {confirmation_block_hash}"
     );
 
     let block_hash_parsed =
@@ -227,17 +225,16 @@ fn main() -> bitcoincore_rpc::Result<()> {
     let blockchain_info = rpc.get_blockchain_info()?;
     let confirmation_block_height = blockchain_info.blocks;
     println!(
-        "Transaction confirmed at block height: {}",
-        confirmation_block_height
+        "Transaction confirmed at block height: {confirmation_block_height}"
     );
 
     // Verify the transaction is now confirmed
     let confirmed_tx = miner_rpc.get_raw_transaction(&txid_parsed, Some(&block_hash_parsed))?;
     println!("Transaction is now confirmed!");
     println!("Confirmed transaction details:");
-    println!("  Block hash: {}", confirmation_block_hash);
-    println!("  Block height: {}", confirmation_block_height);
-    println!("  Transaction ID: {}", txid);
+    println!("  Block hash: {confirmation_block_hash}");
+    println!("  Block height: {confirmation_block_height}");
+    println!("  Transaction ID: {txid}");
 
     let final_miner_balance = miner_rpc.get_balance(None, None)?;
     println!("Final Miner balance: {} BTC", final_miner_balance.to_btc());
@@ -282,7 +279,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
             } else if value > 0.0 && (value - 20.0).abs() >= 0.0001 {
                 // This is the change output (not exactly 20 BTC)
                 miner_change_address = address.to_string();
-                miner_change_amount = format!("{:.8}", value);
+                miner_change_amount = format!("{value:.8}");
             }
         }
     }
@@ -291,7 +288,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
     // Get transaction fees
     let fee_btc = mempool_entry.fees.base.to_btc();
-    let transaction_fees = format!("{:.8}", fee_btc);
+    let transaction_fees = format!("{fee_btc:.8}");
 
     // Get block height and hash
     let block_height = confirmation_block_height.to_string();
@@ -299,16 +296,16 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
     // Write to out.txt file in the correct location (parent directory)
     let mut output_file = File::create("../out.txt")?;
-    writeln!(output_file, "{}", txid_str)?;
-    writeln!(output_file, "{}", miner_input_address)?;
-    writeln!(output_file, "{}", miner_input_amount)?;
-    writeln!(output_file, "{}", trader_output_address)?;
-    writeln!(output_file, "{}", trader_output_amount)?;
-    writeln!(output_file, "{}", miner_change_address)?;
-    writeln!(output_file, "{}", miner_change_amount)?;
-    writeln!(output_file, "{}", transaction_fees)?;
-    writeln!(output_file, "{}", block_height)?;
-    writeln!(output_file, "{}", block_hash)?;
+    writeln!(output_file, "{txid_str}")?;
+    writeln!(output_file, "{miner_input_address}")?;
+    writeln!(output_file, "{miner_input_amount}")?;
+    writeln!(output_file, "{trader_output_address}")?;
+    writeln!(output_file, "{trader_output_amount}")?;
+    writeln!(output_file, "{miner_change_address}")?;
+    writeln!(output_file, "{miner_change_amount}")?;
+    writeln!(output_file, "{transaction_fees}")?;
+    writeln!(output_file, "{block_height}")?;
+    writeln!(output_file, "{block_hash}")?;
 
     Ok(())
 }
