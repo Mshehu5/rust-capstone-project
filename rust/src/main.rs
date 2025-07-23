@@ -139,8 +139,8 @@ fn main() -> bitcoincore_rpc::Result<()> {
             .call::<Vec<String>>("generatetoaddress", &[json!(1), json!(miner_address_str)])?;
         println!("Mined block: {:?}", block_hashes);
 
-      // Coinbase rewards require 100 block confirmations before becoming spendable to prevent issues from chain reorganizations.
-      // This is why we need to mine 100 blocks before the miner balance is greater than 0.
+        // Coinbase rewards require 100 block confirmations before becoming spendable to prevent issues from chain reorganizations.
+        // This is why we need to mine 100 blocks before the miner balance is greater than 0.
         miner_balance = miner_rpc.get_balance(None, None)?;
         println!(
             "Miner wallet balance after {} blocks: {} BTC",
@@ -195,40 +195,31 @@ fn main() -> bitcoincore_rpc::Result<()> {
     )?;
     println!("Transaction sent! TXID: {}", txid);
 
-   
     let txid_parsed = bitcoincore_rpc::bitcoin::Txid::from_str(&txid).unwrap();
 
     // Check transaction in mempool
     println!("\n=== Checking transaction in mempool ===");
 
-    
     let mempool_entry = miner_rpc.get_mempool_entry(&txid_parsed)?;
     println!("Transaction found in mempool:");
     println!("  Size: {} bytes", mempool_entry.vsize);
     println!("  Fee: {} BTC", mempool_entry.fees.base.to_btc());
     println!("  Time: {}", mempool_entry.time);
     println!("  Height: {}", mempool_entry.height);
-   
-
-    
-
 
     // Mine 1 block to confirm the transaction
     println!("\n=== Mining 1 block to confirm the transaction ===");
 
-    
     let confirmation_block_hashes = miner_rpc
         .call::<Vec<String>>("generatetoaddress", &[json!(1), json!(miner_address_str)])?;
     println!("Mined confirmation block: {:?}", confirmation_block_hashes);
 
-    
     let confirmation_block_hash = &confirmation_block_hashes[0];
     println!(
         "Transaction confirmed in block: {}",
         confirmation_block_hash
     );
 
-   
     let block_hash_parsed =
         bitcoincore_rpc::bitcoin::BlockHash::from_str(confirmation_block_hash).unwrap();
 
@@ -248,7 +239,6 @@ fn main() -> bitcoincore_rpc::Result<()> {
     println!("  Block height: {}", confirmation_block_height);
     println!("  Transaction ID: {}", txid);
 
-   
     let final_miner_balance = miner_rpc.get_balance(None, None)?;
     println!("Final Miner balance: {} BTC", final_miner_balance.to_btc());
 
@@ -267,7 +257,6 @@ fn main() -> bitcoincore_rpc::Result<()> {
     // Extract transaction details
     let txid_str = txid.to_string();
 
-    
     let miner_input_address = miner_address_str.clone();
     let miner_input_amount = "50.0";
 
@@ -277,7 +266,6 @@ fn main() -> bitcoincore_rpc::Result<()> {
         &[json!(txid_str), json!(true), json!(confirmation_block_hash)],
     )?;
 
-   
     let vouts = decoded_tx["vout"].as_array().unwrap();
 
     // Find the trader output (20 BTC) and miner change output by amount
@@ -301,7 +289,7 @@ fn main() -> bitcoincore_rpc::Result<()> {
 
     let trader_output_amount = "20.0";
 
-    // Get transaction fees 
+    // Get transaction fees
     let fee_btc = mempool_entry.fees.base.to_btc();
     let transaction_fees = format!("{:.8}", fee_btc);
 
